@@ -170,6 +170,7 @@ class RecordingSession:
     self.logs: list[str] = []
     self.usage_reports: list[dict] = []
     self.final_message = ""
+    self.instruction = "do the task"
     self.mcp_servers: list[dict] = []
     self.workdir = "/app"
     self.limits: dict = {}

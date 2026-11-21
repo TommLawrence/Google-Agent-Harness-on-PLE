@@ -46,10 +46,12 @@ OFFICE_FORMATS = ("docx", "xlsx")
 NON_FINITE_TOKENS = {"nan", "-nan", "+nan", "inf", "-inf", "+inf",
                      "infinity", "-infinity", "+infinity"}
 
-# A deliverable path: absolute POSIX path, or a bare filename with a known
-# deliverable extension. Deliberately generic; nothing here is task-specific.
+# A deliverable path: absolute POSIX path, or a relative path (with optional
+# directories) ending in a known deliverable extension. Deliberately generic;
+# nothing here is task-specific. The lookbehind stops mid-string matches like
+# the "/report.csv" inside "out/report.csv".
 _PATH_RE = re.compile(
-    r"(?:/(?:[\w.\-]+/)*[\w.\-]+|[\w][\w.\-]*\.(?:md|csv|docx|xlsx|pdf|zip|ifc|dxf|py|json|txt|eml|xml|log))\b",
+    r"(?<![\w.\-])(?:/(?:[\w.\-]+/)*[\w.\-]+|(?:[\w][\w.\-]*/)*[\w][\w.\-]*\.(?:md|csv|docx|xlsx|pdf|zip|ifc|dxf|py|json|txt|eml|xml|log))\b",
     re.IGNORECASE,
 )
 _BACKTICK_PATH_RE = re.compile(r"`([^`]+)`")
@@ -188,10 +190,7 @@ def _is_plausible_path(raw: str) -> bool:
     return False
   if ".." in raw.split("/"):
     return False
-  if raw.startswith("/"):
-    return _PATH_RE.fullmatch(raw) is not None
-  return bool(re.fullmatch(r"[\w][\w.\-]*\.(?:md|csv|docx|xlsx|pdf|zip|ifc|dxf|py|json|txt|eml|xml|log)",
-                           raw, re.IGNORECASE))
+  return _PATH_RE.fullmatch(raw) is not None
 
 
 def _add_requirement(files: dict[str, Requirement], path: str, quote: str,
