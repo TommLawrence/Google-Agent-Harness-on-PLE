@@ -53,19 +53,34 @@ Constraint: no Docker / Harbor / gated dataset / live model calls in this pass (
 | Phase | Scope | Status |
 |---|---|---|
 | Pre-flight | inspection, baseline verification, BUILD_STATUS | **done** |
-| A | offline test structure; protocol/session/deadline/usage tests | in progress |
-| B | `ple_harness/`: contract, authority, evidence, context | pending |
-| C | `ple_harness/solvers/`: units, structural, civil, electrical, mechanical | pending |
-| D | Planner / Worker / Cold-Read Verifier orchestration + fallback | pending |
-| E | full offline suite incl. mock-evaluator loopback | pending |
-| F | baseline failure report (`docs/BASELINE_FAILURE_ANALYSIS.md`) | root causes established, write-up pending |
-| G | `kaggle/` offline lab (script, notebook, figures pipeline) | pending |
-| Docs | ARCHITECTURE, LOCAL_DEVELOPMENT_NO_DOCKER, DOCKER_VALIDATION_HANDOFF, README | pending |
+| A | offline test structure; protocol/session/deadline/usage tests | **done** — commit `ff5823e` |
+| B | `ple_harness/`: contract, evidence, context, authority | **done** — commits `fb827a9`, `8fed8ac` |
+| C | `ple_harness/solvers/`: units, structural, civil, electrical, mechanical | **done** — commit `dc46ccd` |
+| D | Planner / Worker / Cold-Read Verifier orchestration + fallback | **done** — commit `883b807` (env-gated OFF; loopback-tested) |
+| E | full offline suite incl. mock-evaluator loopback | **done** — 186 tests, all passing in ~10 s |
+| F | baseline failure report (`docs/BASELINE_FAILURE_ANALYSIS.md`) | **done** — commit `4bb55c4` |
+| G | `kaggle/` offline lab (script, notebook, figures pipeline) | **done** — commit `4bb55c4`; figures generated |
+| Docs | ARCHITECTURE, LOCAL_DEVELOPMENT_NO_DOCKER, DOCKER_VALIDATION_HANDOFF, README | **done** — final docs commit |
+
+## Session log
+
+| Time (EAT) | Phase | Files | Tests | Result | Remaining |
+|---|---|---|---|---|---|
+| 01:10–01:40 | Pre-flight | docs/BUILD_STATUS.md | — | baseline 0.4912 verified from manifest; 4 zero tasks (not 2); trajectories root-caused | — |
+| 01:40–02:00 | A | tests/_fakes.py, test_protocol.py, test_model_configuration.py | 58 | all pass (fixed: missing import hanging the mock evaluator, blocking http.client in the event loop, double reader race) | — |
+| 02:00–02:25 | B | ple_harness/{contract,evidence,context,authority}.py + 4 test modules | 69 | all pass (fixed: invalid regex, mid-string path matches, greedy row regex, `..` normalization, trimmer budget) | — |
+| 02:25–02:50 | C | ple_harness/solvers/ (5 modules) + test_solvers.py | 40 | all pass (fixed: two inverted exact conversion pairs, missing SolverInputError imports, Colebrook iteration) | — |
+| 02:50–03:30 | D+E | orchestrator.py, roles.py, taskio.py, readonly-tools.ts, harness.py (+13 lines), 2 test modules | 23 | all pass incl. e2e loopback (fixed: mock patch scope, fake-pi shebang/raw-string, container key normalization) | real-evaluator validation |
+| 03:30–03:55 | F+G | docs/BASELINE_FAILURE_ANALYSIS.md, kaggle/* | lab runs green | figures + writeup generated with provenance; pending-data placeholders kept | — |
+| 03:55–04:10 | Docs | ARCHITECTURE, LOCAL_DEVELOPMENT_NO_DOCKER, DOCKER_VALIDATION_HANDOFF, README, this log | — | final docs commit | submission flow |
 
 ## Known blockers / deferrals
 
 - Official `kit check`, `eval/run.py`, live dev-set evaluation: **deferred** to the Docker machine
-  (deliberately not attempted here; see `docs/DOCKER_VALIDATION_HANDOFF.md`).
-- Cross-model claims: none possible without a second model family run; writeup keeps placeholders.
+  (deliberately not attempted here; see `docs/DOCKER_VALIDATION_HANDOFF.md` for the ordered steps).
+- The orchestrator is env-gated OFF and must pass a Docker kit check + dev run before being enabled.
+- Cross-model claims: none possible without a second model family run; the writeup keeps placeholders.
 - `artifacts/` is treated as immutable baseline evidence; the manifest tree hash means any harness
   change requires a fresh dev-set run before submission (documented in the handoff doc).
+- No Git push was performed in this pass (assignment §15/§17); all work is in 7 local commits on
+  `main`.
