@@ -263,6 +263,19 @@ async def solve(session: taskbridge.Session) -> str:
       name, model = await asyncio.to_thread(
           configure, agent_dir, relay, session, env
       )
+      # Orchestrated path (planner -> worker -> cold-read verifier, separate
+      # contexts): OFF by default until it passes a Docker kit check and dev
+      # run (docs/DOCKER_VALIDATION_HANDOFF.md). On an early failure it falls
+      # back to the original single-run path below with the remaining time.
+      if os.environ.get("PLE_ORCHESTRATOR", "0") == "1":
+        from ple_harness.orchestrator import (
+            OrchestratorEarlyFailure,
+            run_orchestrated,
+        )
+        try:
+          return await run_orchestrated(session, agent_dir, work, env, name, model)
+        except OrchestratorEarlyFailure as exc:
+          await session.log(f"harness: falling back to the single-run path: {exc}")
       argv = [
           PI,
           "--print",
